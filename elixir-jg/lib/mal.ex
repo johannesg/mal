@@ -10,15 +10,25 @@ defmodule Mal do
   """
 
   def read(input) do
-    input
+    case Mal.Reader.next(input) do
+      {type, form, _rest } -> { type, form }
+    end
   end
 
-  def eval(input) do
-    input
+  def eval({_type, form}) do
+    form
   end
 
-  def print(input) do
-    input
+  def print({:list, list}) do
+    "(" <> (
+    list
+    |> Enum.map(&print/1)
+    |> Enum.join(" "))
+    <> ")"
+  end
+
+  def print({type, form}) do
+    form
   end
 
   def rep(input) do
