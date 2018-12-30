@@ -85,7 +85,7 @@ IMPLS = ada awk bash basic c chuck clojure coffee common-lisp cpp crystal cs d d
 	guile haskell haxe hy io java js julia kotlin livescript logo lua make mal \
 	matlab miniMAL nasm nim objc objpascal ocaml perl perl6 php picolisp plpgsql \
 	plsql powershell ps python r racket rexx rpython ruby rust scala scheme skew \
-	swift swift3 tcl ts vb vhdl vimscript wasm yorick
+	swift swift3 tcl ts vb vhdl vimscript wasm yorick elixir-jg
 
 EXTENSION = .mal
 
@@ -187,6 +187,7 @@ d_STEP_TO_PROG =       d/$($(1))
 dart_STEP_TO_PROG =    dart/$($(1)).dart
 elisp_STEP_TO_PROG =   elisp/$($(1)).el
 elixir_STEP_TO_PROG =  elixir/lib/mix/tasks/$($(1)).ex
+elixir-jg_STEP_TO_PROG =  elixir-jg/lib/mix/tasks/$($(1)).ex
 elm_STEP_TO_PROG =     elm/$($(1)).js
 erlang_STEP_TO_PROG =  erlang/$($(1))
 es6_STEP_TO_PROG =     es6/$($(1)).mjs
