@@ -41,6 +41,7 @@ defmodule Mal.Reader do
   def next_token(")" <> rest), do: {:symbol, ")", rest}
   def next_token("+" <> rest), do: next_plusminus_or_number("+", rest)
   def next_token("-" <> rest), do: next_plusminus_or_number("-", rest)
+  def next_token("\"" <> rest), do: next_string("", rest)
 
   def next_token(str) do
     {ch, rest} = String.next_codepoint(trim(str))
@@ -50,6 +51,17 @@ defmodule Mal.Reader do
       alpha?(ch) || special?(ch) -> next_symbol(ch, rest)
       true -> {:error, str, rest}
     end
+  end
+
+  def next_string(_str, "\n" <> rest), do: {:error, :newline_in_string, rest}
+  def next_string(_str, ""), do: {:error, :unclosed_string, ""}
+  def next_string(str, "\"" <> rest), do: {:string, str, rest}
+  def next_string(str, "\\" <> "\"" <> rest), do: next_string(str <> "\"", rest)
+  def next_string(str, "\\" <> "\\" <> rest), do: next_string(str <> "\\", rest)
+  def next_string(str, "\\" <> "\n" <> rest), do: next_string(str <> "\n", rest)
+  def next_string(str, rest) do
+    {ch, rest} = String.next_codepoint(rest)
+    next_string(str <> ch, rest)
   end
 
   def next_plusminus_or_number(ch, ""), do: {:symbol, ch, ""}

@@ -28,11 +28,15 @@ defmodule Mal do
     <> ")"
   end
 
-  def print({:error, err}) do
-    "ERROR"
+  def print({:string, str}) do
+    "\"" <> str <> "\""
   end
 
-  def print({type, form}) do
+  def print({:error, err}) do
+    "ERROR: " <> inspect(err)
+  end
+
+  def print({_type, form}) do
     form
   end
 
