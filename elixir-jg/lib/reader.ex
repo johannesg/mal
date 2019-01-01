@@ -1,4 +1,6 @@
 defmodule Mal.Reader do
+  require Logger
+
   def next(str) do
     # parse(:unknown, "", txt, String.next_codepoint(txt))
 
@@ -6,18 +8,20 @@ defmodule Mal.Reader do
     read_form(tokens)
   end
 
-  def read_form([{:symbol, "("} | rest]), do: read_list([], rest)
+  def read_form([{:symbol, "("} | rest]), do: read_list([], ")", rest)
+  def read_form([{:symbol, "["} | rest]), do: read_list([], "]", rest)
   def read_form([{:error, err} | rest]), do: {:error, err, rest}
-  def read_form([{type, token} | rest]), do: { type, token, rest }
+  def read_form([{type, token} | rest]), do: {type, token, rest}
 
-  def read_list(_list, []), do: {:error, :unclosed_list}
+  def read_list(_list, _t, []), do: {:error, :unbalanced}
 
-  def read_list(_list, [{:error, err} | _rest]), do: {:error, err}
-  def read_list(list, [{:symbol, ")"} | rest]), do: {:list, list, rest}
+  def read_list(_list, _t, [{:error, err} | _rest]), do: {:error, err}
+  def read_list(list, ")", [{:symbol, ")" } | rest]), do: {:list, list, rest}
+  def read_list(list, "]", [{:symbol, "]" } | rest]), do: {:vector, list, rest}
 
-  def read_list(list, tokens) do
-    { type, form, rest } = read_form(tokens)
-    read_list(list ++ [{type, form}], rest)
+  def read_list(list, t, tokens) do
+    {type, form, rest} = read_form(tokens)
+    read_list(list ++ [{type, form}], t, rest)
   end
 
   defp trim("," <> rest), do: trim(rest)
@@ -36,9 +40,7 @@ defmodule Mal.Reader do
   end
 
   def next_token(""), do: :eof
-#   def next_token("," <> rest), do: next_token(rest)
-  def next_token("(" <> rest), do: {:symbol, "(", rest}
-  def next_token(")" <> rest), do: {:symbol, ")", rest}
+  #   def next_token("," <> rest), do: next_token(rest)
   def next_token("+" <> rest), do: next_plusminus_or_number("+", rest)
   def next_token("-" <> rest), do: next_plusminus_or_number("-", rest)
   def next_token("\"" <> rest), do: next_string("", rest)
@@ -47,18 +49,19 @@ defmodule Mal.Reader do
     {ch, rest} = String.next_codepoint(trim(str))
 
     cond do
+      String.contains?("[]{}()'`~^@", ch) -> {:symbol, ch, rest}
       digit?(ch) -> next_number(str)
-      alpha?(ch) || special?(ch) -> next_symbol(ch, rest)
-      true -> {:error, str, rest}
+      true -> next_symbol(ch, rest)
     end
   end
 
   def next_string(_str, "\n" <> rest), do: {:error, :newline_in_string, rest}
   def next_string(_str, ""), do: {:error, :unclosed_string, ""}
   def next_string(str, "\"" <> rest), do: {:string, str, rest}
-  def next_string(str, "\\" <> "\"" <> rest), do: next_string(str <> "\"", rest)
-  def next_string(str, "\\" <> "\\" <> rest), do: next_string(str <> "\\", rest)
-  def next_string(str, "\\" <> "\n" <> rest), do: next_string(str <> "\n", rest)
+  def next_string(str, "\\\\" <> rest), do: next_string(str <> "\\", rest)
+  def next_string(str, "\\\"" <> rest), do: next_string(str <> "\"", rest)
+  def next_string(str, "\\n" <> rest), do: next_string(str <> "\n", rest)
+
   def next_string(str, rest) do
     {ch, rest} = String.next_codepoint(rest)
     next_string(str <> ch, rest)
@@ -86,10 +89,9 @@ defmodule Mal.Reader do
   def next_symbol(sym, rest) do
     {ch, rest2} = String.next_codepoint(rest)
 
-    if !alpha?(ch) && !digit?(ch) && !special?(ch) do
-      {:symbol, sym, rest}
-    else
-      next_symbol(sym <> ch, rest2)
+    cond do
+      String.contains?(" \n[]{}()'\"`,;", ch) -> {:symbol, sym, rest}
+      true -> next_symbol(sym <> ch, rest2)
     end
   end
 

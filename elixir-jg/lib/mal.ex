@@ -20,24 +20,33 @@ defmodule Mal do
     form
   end
 
-  def print({:list, list}) do
-    "(" <> (
-    list
-    |> Enum.map(&print/1)
-    |> Enum.join(" "))
-    <> ")"
-  end
+  def print({:list, list}), do: print_list("(", list, ")")
+  def print({:vector, list}), do: print_list("[", list, "]")
 
   def print({:string, str}) do
-    "\"" <> str <> "\""
+    "\"" <> print_str(str) <> "\""
   end
 
   def print({:error, err}) do
-    "ERROR: " <> inspect(err)
+    "#{err}"
   end
 
   def print({_type, form}) do
     form
+  end
+
+  def print_str(str) do
+    str
+    |> String.replace("\n", "\\n")
+    |> String.replace("\"", "\\\"")
+  end
+
+  def print_list(a, list, b) do
+    a <> (
+    list
+    |> Enum.map(&print/1)
+    |> Enum.join(" "))
+    <> b
   end
 
   def rep(input) do
