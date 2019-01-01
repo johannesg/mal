@@ -13,6 +13,7 @@ defmodule Mal do
     case Mal.Reader.next(input) do
       {type, form, _rest } -> { type, form }
       {:error, err} -> {:error, err}
+      :eof -> :eof
     end
   end
 
@@ -20,11 +21,22 @@ defmodule Mal do
     form
   end
 
+  def print(:eof), do: ""
   def print({:list, list}), do: print_list("(", list, ")")
   def print({:vector, list}), do: print_list("[", list, "]")
 
   def print({:string, str}) do
     "\"" <> print_str(str) <> "\""
+  end
+
+  def print({:quote, q}), do: "(quote #{print(q)})"
+  def print({:quasiquote, q}), do: "(quasiquote #{print(q)})"
+  def print({:unquote, q}), do: "(unquote #{print(q)})"
+  def print({:spliceunquote, q}), do: "(splice-unquote #{print(q)})"
+  def print({:deref, q}), do: "(deref #{print(q)})"
+
+  def print({:withmeta, {meta, form}}) do
+    "(with-meta #{print(meta)} #{print(form)})"
   end
 
   def print({:error, err}) do
