@@ -1,5 +1,4 @@
 defmodule Mal.Tokenizer do
-
   def read_tokens(str) do
     Stream.unfold(read_token(trim(str)), fn
       :eof ->
@@ -73,16 +72,21 @@ defmodule Mal.Tokenizer do
     {{:number, number}, rest}
   end
 
-  def read_symbol(sym, ""), do: {{:symbol, sym}, ""}
+  def read_symbol(sym, ""), do: check_symbol(sym, "")
 
   def read_symbol(sym, rest) do
     {ch, rest2} = read_char(rest)
 
     cond do
-      String.contains?(" \n,[]{}()'\"`;", ch) -> {{:symbol, sym}, rest}
+      String.contains?(" \n,[]{}()'\"`;", ch) -> check_symbol(sym, rest)
       true -> read_symbol(sym <> ch, rest2)
     end
   end
+
+  def check_symbol(":", _rest), do: {:error, :invalid_token}
+  def check_symbol("::", _rest), do: {:error, :invalid_token}
+  def check_symbol(":" <> keyword, rest), do: {{:keyword, keyword}, rest}
+  def check_symbol(sym, rest), do: {{:symbol, sym}, rest}
 
   # def alpha?(cp), do: String.contains?("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", cp)
   def digit?(cp), do: String.contains?("0123456789", cp)

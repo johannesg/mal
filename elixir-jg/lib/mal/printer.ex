@@ -30,6 +30,8 @@ defmodule Mal.Printer do
     "#{err}"
   end
 
+  def print({:keyword, kw}), do: ":#{kw}"
+
   def print({_type, form}) do
     form
   end
