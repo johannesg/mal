@@ -11,7 +11,7 @@ defmodule Mal do
 
   def read(input) do
     case Mal.Reader.next(input) do
-      {type, form, _rest } -> { type, form }
+      {type, form, _rest} -> {type, form}
       {:error, err} -> {:error, err}
       :eof -> :eof
     end
@@ -25,6 +25,15 @@ defmodule Mal do
   def print({:list, list}), do: print_list("(", list, ")")
   def print({:vector, list}), do: print_list("[", list, "]")
 
+  def print({:map, map}) do
+    "{" <>
+      (map
+       |> Enum.map(fn {k, v} ->
+         "#{print(k)} #{print(v)}"
+       end)
+       |> Enum.join(" ")) <> "}"
+  end
+
   def print({:string, str}) do
     "\"" <> print_str(str) <> "\""
   end
@@ -36,7 +45,7 @@ defmodule Mal do
   def print({:deref, q}), do: "(deref #{print(q)})"
 
   def print({:withmeta, {meta, form}}) do
-    "(with-meta #{print(meta)} #{print(form)})"
+    "(with-meta #{print(form)} #{print(meta)})"
   end
 
   def print({:error, err}) do
@@ -54,11 +63,10 @@ defmodule Mal do
   end
 
   def print_list(a, list, b) do
-    a <> (
-    list
-    |> Enum.map(&print/1)
-    |> Enum.join(" "))
-    <> b
+    a <>
+      (list
+       |> Enum.map(&print/1)
+       |> Enum.join(" ")) <> b
   end
 
   def rep(input) do

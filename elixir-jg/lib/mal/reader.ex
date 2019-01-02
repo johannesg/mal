@@ -44,13 +44,13 @@ defmodule Mal.Reader do
     end
   end
 
+  def read_map(_map, []), do: {:error, :unclosed_map, []}
+  def read_map(map, [{:symbol, "}"} | rest]), do: {:map, map, rest}
   def read_map(map, tokens) do
     case read_form_pair([], tokens) do
       :eof -> {:error, :unclosed_map, tokens}
 
       {:error, _err, _rest} = err -> err
-
-      {:symbol, "}", rest} -> {:map, map, rest}
 
       {[key, value], rest} ->
         read_map(Map.put(map, key, value), rest)
@@ -71,8 +71,8 @@ defmodule Mal.Reader do
       :eof ->
         {:error, :incomplete_meta, rest}
 
-      {forms, rest} ->
-        {:withmeta, forms, rest}
+      {[meta, form], rest} ->
+        {:withmeta, {meta, form}, rest}
     end
   end
 
