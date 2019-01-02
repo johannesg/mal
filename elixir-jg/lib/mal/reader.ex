@@ -61,7 +61,7 @@ defmodule Mal.Reader do
   def read_map(map, tokens) do
     case read_form_pair(tokens) do
       :eof ->
-        {:error, :unclosed_map, tokens}
+        {:error, :unclosed_map}
 
       {:error, _err} = err ->
         err
@@ -74,10 +74,17 @@ defmodule Mal.Reader do
     end
   end
 
-  def read_quote(q, rest) do
-    {form, rest} = read_form(rest)
+  def read_quote(q, tokens) do
+    case read_form(tokens) do
+      {:error, _err} = err ->
+        err
 
-    {{q, form}, rest}
+      :eof ->
+        {:error, :empty_quote}
+
+      {form, rest} ->
+        {{q, form}, rest}
+    end
   end
 
   def read_meta(rest) do
