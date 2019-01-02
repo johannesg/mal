@@ -31,6 +31,7 @@ defmodule Mal.Printer do
   end
 
   def print({:keyword, kw}), do: ":#{kw}"
+  def print({:fn, f}), do: "#{inspect f}"
 
   def print({_type, form}) do
     form
