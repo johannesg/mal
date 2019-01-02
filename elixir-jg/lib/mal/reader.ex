@@ -14,9 +14,9 @@ defmodule Mal.Reader do
   end
 
   def read_form([]), do: :eof
-  def read_form([{:symbol, "("} | rest]), do: read_list([], ")", rest)
-  def read_form([{:symbol, "["} | rest]), do: read_list([], "]", rest)
-  def read_form([{:symbol, "{"} | rest]), do: read_map(%{}, rest)
+  def read_form([{:symbol, "("} | rest]), do: read_list(")", rest)
+  def read_form([{:symbol, "["} | rest]), do: read_list("]", rest)
+  def read_form([{:symbol, "{"} | rest]), do: read_map(rest)
   def read_form([{:symbol, "'"} | rest]), do: read_quote(:quote, rest)
   def read_form([{:symbol, "`"} | rest]), do: read_quote(:quasiquote, rest)
   def read_form([{:symbol, "~@"} | rest]), do: read_quote(:spliceunquote, rest)
@@ -26,6 +26,7 @@ defmodule Mal.Reader do
   def read_form([{:error, err} | _rest]), do: {:error, err}
   def read_form([form | rest]), do: {form, rest}
 
+  def read_list(t, tokens), do: read_list([], t, tokens)
   def read_list(_list, _t, []), do: {:error, :unbalanced}
 
   def read_list(_list, _t, [{:error, err} | _rest]), do: {:error, err}
@@ -37,6 +38,7 @@ defmodule Mal.Reader do
     read_list(list ++ [form], t, rest)
   end
 
+  def read_form_pair(tokens), do: read_form_pair([], tokens)
   def read_form_pair([], []), do: :eof
   def read_form_pair([_first], []), do: {:error, :expected_form}
   def read_form_pair([_first, _second] = forms, rest), do: {forms, rest}
@@ -51,16 +53,21 @@ defmodule Mal.Reader do
     end
   end
 
+  def read_map(tokens), do: read_map(%{}, tokens)
+
   def read_map(_map, []), do: {:error, :unclosed_map}
   def read_map(map, [{:symbol, "}"} | rest]), do: {{:map, map}, rest}
 
   def read_map(map, tokens) do
-    case read_form_pair([], tokens) do
+    case read_form_pair(tokens) do
       :eof ->
         {:error, :unclosed_map, tokens}
 
       {:error, _err} = err ->
         err
+
+      {[_key, {:symbol, "}"}], _rest} ->
+        {:error, :missing_value}
 
       {[key, value], rest} ->
         read_map(Map.put(map, key, value), rest)
@@ -74,7 +81,7 @@ defmodule Mal.Reader do
   end
 
   def read_meta(rest) do
-    case read_form_pair([], rest) do
+    case read_form_pair(rest) do
       {:error, _err} = err ->
         err
 
