@@ -1,11 +1,14 @@
 defmodule Mal.Reader do
   require Logger
 
-  def next(str) do
-    # parse(:unknown, "", txt, String.next_codepoint(txt))
-
+  def read(str) do
     tokens = read_tokens(str)
-    read_form(tokens)
+
+    case read_form(tokens) do
+      :eof -> :eof
+      {:error, err, _rest} -> {:error, err}
+      {form, _rest} -> form
+    end
   end
 
   def read_form([]), do: :eof
@@ -19,17 +22,17 @@ defmodule Mal.Reader do
   def read_form([{:symbol, "@"} | rest]), do: read_quote(:deref, rest)
   def read_form([{:symbol, "^"} | rest]), do: read_meta(rest)
   def read_form([{:error, err} | rest]), do: {:error, err, rest}
-  def read_form([{type, token} | rest]), do: {type, token, rest}
+  def read_form([{_type, _token} = form | rest]), do: {form, rest}
 
-  def read_list(_list, _t, []), do: {:error, :unbalanced}
+  def read_list(_list, _t, []), do: {:error, :unbalanced, []}
 
-  def read_list(_list, _t, [{:error, err} | _rest]), do: {:error, err}
-  def read_list(list, ")", [{:symbol, ")"} | rest]), do: {:list, list, rest}
-  def read_list(list, "]", [{:symbol, "]"} | rest]), do: {:vector, list, rest}
+  def read_list(_list, _t, [{:error, err} | rest]), do: {:error, err, rest}
+  def read_list(list, ")", [{:symbol, ")"} | rest]), do: {{:list, list}, rest}
+  def read_list(list, "]", [{:symbol, "]"} | rest]), do: {{:vector, list}, rest}
 
   def read_list(list, t, tokens) do
-    {type, form, rest} = read_form(tokens)
-    read_list(list ++ [{type, form}], t, rest)
+    {form, rest} = read_form(tokens)
+    read_list(list ++ [form], t, rest)
   end
 
   def read_form_pair([], []), do: :eof
@@ -38,19 +41,24 @@ defmodule Mal.Reader do
 
   def read_form_pair(forms, tokens) do
     case read_form(tokens) do
-      {:error, _err, _rest} = err -> err
-      {type, form, rest} ->
-        read_form_pair(forms ++ [{type, form}], rest)
+      {:error, _err, _rest} = err ->
+        err
+
+      {form, rest} ->
+        read_form_pair(forms ++ [form], rest)
     end
   end
 
   def read_map(_map, []), do: {:error, :unclosed_map, []}
-  def read_map(map, [{:symbol, "}"} | rest]), do: {:map, map, rest}
+  def read_map(map, [{:symbol, "}"} | rest]), do: {{:map, map}, rest}
+
   def read_map(map, tokens) do
     case read_form_pair([], tokens) do
-      :eof -> {:error, :unclosed_map, tokens}
+      :eof ->
+        {:error, :unclosed_map, tokens}
 
-      {:error, _err, _rest} = err -> err
+      {:error, _err, _rest} = err ->
+        err
 
       {[key, value], rest} ->
         read_map(Map.put(map, key, value), rest)
@@ -58,9 +66,9 @@ defmodule Mal.Reader do
   end
 
   def read_quote(q, rest) do
-    {type, form, rest} = read_form(rest)
+    {form, rest} = read_form(rest)
 
-    {q, {type, form}, rest}
+    {{q, form}, rest}
   end
 
   def read_meta(rest) do
@@ -72,88 +80,91 @@ defmodule Mal.Reader do
         {:error, :incomplete_meta, rest}
 
       {[meta, form], rest} ->
-        {:withmeta, {meta, form}, rest}
+        {{:withmeta, {meta, form}}, rest}
     end
   end
 
   defp trim("," <> rest), do: trim(rest)
   defp trim(str), do: String.trim_leading(str)
 
+  defp read_char(str), do: String.next_codepoint(str)
+
   def read_tokens(str) do
-    Stream.unfold(next_token(trim(str)), fn
+    Stream.unfold(read_token(trim(str)), fn
       :eof ->
         nil
 
-      {_type, _tok, rest} = curr ->
-        {curr, next_token(trim(rest))}
+      {:error, err, rest} ->
+        {{:error, err}, read_token(trim(rest))}
+
+      {form, rest} ->
+        {form, read_token(trim(rest))}
     end)
-    |> Enum.map(fn {type, tok, _rest} -> {type, tok} end)
     |> Enum.to_list()
   end
 
-  def next_token(""), do: :eof
-  #   def next_token("," <> rest), do: next_token(rest)
-  def next_token(";;" <> rest), do: ignore_comment(rest)
-  def next_token("+" <> rest), do: next_plusminus_or_number("+", rest)
-  def next_token("-" <> rest), do: next_plusminus_or_number("-", rest)
-  def next_token("\"" <> rest), do: next_string("", rest)
-  def next_token("~@" <> rest), do: {:symbol, "~@", rest}
+  def read_token(""), do: :eof
+  #   def read_token("," <> rest), do: read_token(rest)
+  def read_token(";;" <> rest), do: ignore_comment(rest)
+  def read_token("+" <> rest), do: read_plusminus_or_number("+", rest)
+  def read_token("-" <> rest), do: read_plusminus_or_number("-", rest)
+  def read_token("\"" <> rest), do: read_string("", rest)
+  def read_token("~@" <> rest), do: {{:symbol, "~@"}, rest}
 
-  def next_token(str) do
-    {ch, rest} = String.next_codepoint(trim(str))
+  def read_token(str) do
+    {ch, rest} = read_char(trim(str))
 
     cond do
-      String.contains?("[]{}()'`~^@", ch) -> {:symbol, ch, rest}
-      digit?(ch) -> next_number(str)
-      true -> next_symbol(ch, rest)
+      String.contains?("[]{}()'`~^@", ch) -> {{:symbol, ch}, rest}
+      digit?(ch) -> read_number(str)
+      true -> read_symbol(ch, rest)
     end
   end
 
   def ignore_comment(""), do: :eof
-  def ignore_comment("\n" <> rest), do: next_token(rest)
+  def ignore_comment("\n" <> rest), do: read_token(rest)
 
   def ignore_comment(str) do
-    {_ch, rest} = String.next_codepoint(trim(str))
+    {_ch, rest} = read_char(str)
     ignore_comment(rest)
   end
 
-  def next_string(_str, "\n" <> rest), do: {:error, :newline_in_string, rest}
-  def next_string(_str, ""), do: {:error, :unclosed_string, ""}
-  def next_string(str, "\"" <> rest), do: {:string, str, rest}
-  def next_string(str, "\\\\" <> rest), do: next_string(str <> "\\", rest)
-  def next_string(str, "\\\"" <> rest), do: next_string(str <> "\"", rest)
-  def next_string(str, "\\n" <> rest), do: next_string(str <> "\n", rest)
+  def read_string(_str, "\n" <> rest), do: {:error, :newline_in_string, rest}
+  def read_string(_str, ""), do: {:error, :unclosed_string, ""}
+  def read_string(str, "\"" <> rest), do: {{:string, str}, rest}
+  def read_string(str, "\\\\" <> rest), do: read_string(str <> "\\", rest)
+  def read_string(str, "\\\"" <> rest), do: read_string(str <> "\"", rest)
+  def read_string(str, "\\n" <> rest), do: read_string(str <> "\n", rest)
 
-  def next_string(str, rest) do
-    {ch, rest} = String.next_codepoint(rest)
-    next_string(str <> ch, rest)
+  def read_string(str, rest) do
+    {ch, rest} = read_char(rest)
+    read_string(str <> ch, rest)
   end
 
-  def next_plusminus_or_number(ch, ""), do: {:symbol, ch, ""}
+  def read_plusminus_or_number(ch, ""), do: {{:symbol, ch}, ""}
 
-  def next_plusminus_or_number(ch, rest) do
-    {ch2, _rest2} = String.next_codepoint(rest)
+  def read_plusminus_or_number(ch, rest) do
+    {ch2, _rest2} = read_char(rest)
 
     cond do
-      digit?(ch2) -> next_number(ch <> rest)
-      true -> next_symbol(ch, rest)
+      digit?(ch2) -> read_number(ch <> rest)
+      true -> read_symbol(ch, rest)
     end
   end
 
-  def next_number(str) do
+  def read_number(str) do
     {number, rest} = Integer.parse(str)
-    {:number, number, rest}
+    {{:number, number}, rest}
   end
 
-  @spec next_symbol(any(), binary()) :: {:symbol, any(), binary()}
-  def next_symbol(sym, ""), do: {:symbol, sym, ""}
+  def read_symbol(sym, ""), do: {{:symbol, sym}, ""}
 
-  def next_symbol(sym, rest) do
-    {ch, rest2} = String.next_codepoint(rest)
+  def read_symbol(sym, rest) do
+    {ch, rest2} = read_char(rest)
 
     cond do
-      String.contains?(" \n[]{}()'\"`,;", ch) -> {:symbol, sym, rest}
-      true -> next_symbol(sym <> ch, rest2)
+      String.contains?(" \n,[]{}()'\"`;", ch) -> {{:symbol, sym}, rest}
+      true -> read_symbol(sym <> ch, rest2)
     end
   end
 

@@ -10,11 +10,7 @@ defmodule Mal do
   """
 
   def read(input) do
-    case Mal.Reader.next(input) do
-      {type, form, _rest} -> {type, form}
-      {:error, err} -> {:error, err}
-      :eof -> :eof
-    end
+    Mal.Reader.read(input)
   end
 
   def eval({_type, form}) do
