@@ -4,9 +4,6 @@ defmodule Mal.Tokenizer do
       :eof ->
         nil
 
-      {:error, err, rest} ->
-        {{:error, err}, read_token(trim(rest))}
-
       {form, rest} ->
         {form, read_token(trim(rest))}
     end)
@@ -44,8 +41,8 @@ defmodule Mal.Tokenizer do
     ignore_comment(rest)
   end
 
-  def read_string(_str, "\n" <> rest), do: {:error, :newline_in_string, rest}
-  def read_string(_str, ""), do: {:error, :unclosed_string, ""}
+  def read_string(_str, "\n" <> rest), do: throw {:error, :newline_in_string}
+  def read_string(_str, ""), do: throw {:error, :unclosed_string }
   def read_string(str, "\"" <> rest), do: {{:string, str}, rest}
   def read_string(str, "\\\\" <> rest), do: read_string(str <> "\\", rest)
   def read_string(str, "\\\"" <> rest), do: read_string(str <> "\"", rest)
@@ -83,8 +80,8 @@ defmodule Mal.Tokenizer do
     end
   end
 
-  def check_symbol(":", _rest), do: {:error, :invalid_token}
-  def check_symbol("::", _rest), do: {:error, :invalid_token}
+  def check_symbol(":", _rest), do: throw {:error, :invalid_token}
+  def check_symbol("::", _rest), do: throw {:error, :invalid_token}
   def check_symbol(":" <> keyword, rest), do: {{:keyword, keyword}, rest}
   def check_symbol(sym, rest), do: {{:symbol, sym}, rest}
 

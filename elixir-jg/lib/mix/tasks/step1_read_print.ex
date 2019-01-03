@@ -9,6 +9,16 @@ defmodule Mix.Tasks.Step1ReadPrint do
 
   defdelegate  print(ast), to: Mal.Printer
 
+  def rep(str) do
+    str
+    |> read()
+    |> eval(nil)
+    |> print()
+  catch
+    {:error, err} ->
+      "ERROR: #{err}"
+  end
+
   def loop() do
     case IO.gets(:stdio, "user> ") do
       :eof ->
@@ -19,13 +29,7 @@ defmodule Mix.Tasks.Step1ReadPrint do
         1
 
       line ->
-        result =
-          line
-          |> read()
-          |> eval(nil)
-          |> print()
-
-        IO.puts(:stdio, result)
+        IO.puts(:stdio, rep(line))
         loop()
     end
   end

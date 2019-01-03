@@ -26,10 +26,6 @@ defmodule Mal.Printer do
     "(with-meta #{print(form)} #{print(meta)})"
   end
 
-  def print({:error, err}) do
-    "#{err}"
-  end
-
   def print({:keyword, kw}), do: ":#{kw}"
   def print({:fn, f}), do: "#{inspect f}"
 
