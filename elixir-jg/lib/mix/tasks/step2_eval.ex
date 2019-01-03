@@ -11,15 +11,19 @@ defmodule Mix.Tasks.Step2Eval do
 
   def rep(str) do
     env = %{
-      "+" => {:fn, &Mal.CoreFunctions.add/2 },
-      "++" => {:fn, fn (a, b) -> a + b end },
-      "a" => {:string, "abcd"}
+      "+" => {:fn, &+/2 },
+      "-" => {:fn, &-/2 },
+      "*" => {:fn, &*/2 },
+      "/" => {:fn, &//2 },
     }
 
     str
     |> read()
     |> eval(env)
     |> print()
+  catch
+    {:error, err} ->
+      "ERROR: #{err}"
   end
 
   def loop() do
