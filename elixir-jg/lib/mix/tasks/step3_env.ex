@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Step2Eval do
+defmodule Mix.Tasks.Step3Env do
   use Mix.Task
 
   def run(_), do: loop(Mal.Env.new())
@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Step2Eval do
     end
   catch
     {:error, err} ->
-      {"ERROR: #{err}", env}
+      { "ERROR: #{err}", env }
   end
 
   def loop(env) do
