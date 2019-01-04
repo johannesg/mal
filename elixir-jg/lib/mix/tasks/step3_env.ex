@@ -17,11 +17,13 @@ defmodule Mix.Tasks.Step3Env do
     ) do
       {output, env}
     else
-      _ -> throw({:error, :repl_error})
+      other -> throw({:error, :unknown_match, other})
     end
   catch
     {:error, err} ->
       { "ERROR: #{err}", env }
+    {:error, err, extra} ->
+      { "ERROR: #{err}\nEXTRA: #{inspect(extra)}", env }
   end
 
   def loop(env) do

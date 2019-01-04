@@ -14,9 +14,11 @@ defmodule Mal.Env do
     {%{}, parent}
   end
 
-  def get({env, _parent}, key) do
+  def get(nil, key), do: throw({:error, "#{key} not found"})
+
+  def get({env, parent_env}, key) do
     case Map.get(env, key) do
-      nil -> throw({:error, :symbol_not_found})
+      nil -> get(parent_env, key)
       v -> v
     end
   end
