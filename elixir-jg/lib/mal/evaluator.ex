@@ -13,6 +13,9 @@ defmodule Mal.Evaluator do
 
   def eval({:list, [{:symbol, "def!"} | args]}, env), do: Special.def!(args, env)
   def eval({:list, [{:symbol, "let*"} | args]}, env), do: Special.let(args, env)
+  def eval({:list, [{:symbol, "do"} | args]}, env), do: Special.do_(args, env)
+  def eval({:list, [{:symbol, "if"} | args]}, env), do: Special.if_(args, env)
+  def eval({:list, [{:symbol, "fn*"} | args]}, env), do: Special.fn_(args, env)
 
   # def eval({:list, [{:symbol, "let*"} | args]}, env) do
   #   env = Env.new(env)
@@ -30,7 +33,9 @@ defmodule Mal.Evaluator do
   def eval({:list, list}, env) do
     {[f | args], env} = eval_list(list, env)
 
-    {make_form(applyfn(f, args)), env}
+    { result, env } = applyfn(f, args, env)
+
+    {result, env}
   end
 
   def eval({:vector, vec}, env) do
@@ -66,12 +71,18 @@ defmodule Mal.Evaluator do
     {Enum.reverse(newlist), env}
   end
 
-  defp applyfn({:fn, f}, args) do
+  defp applyfn({:fn, f}, args, env) do
     args = Enum.map(args, fn {_, value} -> value end)
-    apply(f, args)
+    { make_form(apply(f, args)), env }
   end
 
-  defp applyfn(_, _), do: throw({:error, :not_a_function})
+  defp applyfn({:fnv, f}, args, env) do
+    # args = Enum.map(args, fn {_, value} -> value end)
+    { result, env } = apply(f, [args, env])
+    { result, env}
+  end
+
+  defp applyfn(_, _, _), do: throw({:error, :not_a_function})
 
   defp make_form(term) when is_number(term), do: {:number, term}
   defp make_form(term) when is_atom(term), do: {:keyword, term}

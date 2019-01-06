@@ -41,8 +41,8 @@ defmodule Mal.Env do
 
   defp init(env, [], []), do: env
   defp init(env, [{:symbol, key} | binds], [e | exprs]) do
-    { value, env } = Evaluator.eval(e, env)
-    env = set(env, key, value)
+    # { value, env } = Evaluator.eval(e, env)
+    env = set(env, key, e)
     init(env, binds, exprs)
   end
   defp init(_env, [_nosymbol | _binds], [_e | _exprs]), do: throw {:error, :must_be_a_symbol}
