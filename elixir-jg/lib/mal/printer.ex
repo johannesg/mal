@@ -1,5 +1,8 @@
 defmodule Mal.Printer do
   def print(:eof), do: ""
+  def print(nil), do: "nil"
+  def print(true), do: "true"
+  def print(false), do: "false"
   def print({:list, list}), do: print_list("(", list, ")")
   def print({:vector, list}), do: print_list("[", list, "]")
 

@@ -41,7 +41,7 @@ defmodule Mal.Tokenizer do
     ignore_comment(rest)
   end
 
-  def read_string(_str, "\n" <> rest), do: throw({:error, :newline_in_string})
+  def read_string(_str, "\n" <> _rest), do: throw({:error, :newline_in_string})
   def read_string(_str, ""), do: throw({:error, :unclosed_string})
   def read_string(str, "\"" <> rest), do: {{:string, str}, rest}
   def read_string(str, "\\\\" <> rest), do: read_string(str <> "\\", rest)
@@ -80,6 +80,9 @@ defmodule Mal.Tokenizer do
     end
   end
 
+  def check_symbol("nil", rest), do: { nil, rest }
+  def check_symbol("true", rest), do: { true, rest }
+  def check_symbol("false", rest), do: { false, rest }
   def check_symbol(":", _rest), do: throw({:error, :invalid_token})
   def check_symbol("::", _rest), do: throw({:error, :invalid_token})
   def check_symbol(":" <> keyword, rest), do: {{:keyword, String.to_atom(keyword)}, rest}

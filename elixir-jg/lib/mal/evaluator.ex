@@ -2,6 +2,9 @@ defmodule Mal.Evaluator do
   alias Mal.Env
   alias Mal.Special
 
+  import Mal.Types
+
+  @spec eval(Types.form(), Types.env()) :: {Types.form(), Types.env()}
   def eval({:symbol, sym}, env) do
     {Env.get(env, sym), env}
   end
@@ -53,7 +56,7 @@ defmodule Mal.Evaluator do
     {form, env}
   end
 
-  def eval_list(list, env) do
+  defp eval_list(list, env) do
     {newlist, env} =
       Enum.reduce(list, {[], env}, fn form, {newlist, env} ->
         {form, env} = eval(form, env)

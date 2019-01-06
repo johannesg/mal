@@ -14,20 +14,10 @@ defmodule Mal.Special do
   def let(_, _), do: throw({:error, :invalid_args})
 
   defp let(bindings, form, env) do
-    new_env = set_env(bindings, Env.new(env))
+    new_env = Env.new(env, bindings)
 
     {result, _} = Evaluator.eval(form, new_env)
     {result, env}
   end
 
-
-  defp set_env([], env), do: env
-  defp set_env([{:symbol, key}, form | bindings], env) do
-    { form, env } = Evaluator.eval(form, env)
-    env = Env.set(env, key, form)
-    set_env(bindings, env)
-  end
-
-  defp set_env([{_t, _v}, _form | _bindings], _env), do: throw {:error, :expected_symbol}
-  defp set_env(_b, _env), do: throw {:error, :invalid_args}
 end
