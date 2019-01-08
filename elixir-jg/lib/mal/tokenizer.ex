@@ -80,9 +80,9 @@ defmodule Mal.Tokenizer do
     end
   end
 
-  def check_symbol("nil", rest), do: { nil, rest }
-  def check_symbol("true", rest), do: { true, rest }
-  def check_symbol("false", rest), do: { false, rest }
+  # def check_symbol("nil", rest), do: { nil, rest }
+  # def check_symbol("true", rest), do: { true, rest }
+  # def check_symbol("false", rest), do: { false, rest }
   def check_symbol(":", _rest), do: throw({:error, :invalid_token})
   def check_symbol("::", _rest), do: throw({:error, :invalid_token})
   def check_symbol(":" <> keyword, rest), do: {{:keyword, String.to_atom(keyword)}, rest}

@@ -1,8 +1,21 @@
 defmodule Mal.Evaluator do
   alias Mal.Env
   alias Mal.Special
+  alias Mal.Forms
 
   import Mal.Types
+  require Logger
+
+  defprotocol Eval do
+    @fallback_to_any true
+    def eval(form, env)
+  end
+
+  defimpl Eval, for: Any do
+    def eval(form, env), do: { form, env }
+  end
+
+  def eval(f, env), do: Eval.eval(f, env)
 
   @spec eval(Types.form(), Types.env()) :: {Types.form(), Types.env()}
   def eval({:symbol, sym}, env) do
