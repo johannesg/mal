@@ -3,16 +3,9 @@ defmodule Mal.Env do
   alias Mal.Forms
   import Mal.Types
 
-  @coreenv %{
-    "+" => %Forms.Interop{fn: &+/2},
-    "-" => %Forms.Interop{fn: &-/2},
-    "*" => %Forms.Interop{fn: &*/2},
-    "/" => %Forms.Interop{fn: &//2}
-  }
-
   @spec new() :: Types.env()
   def new() do
-    [@coreenv]
+    [Mal.CoreFunctions.get_all_functions()]
   end
 
   @spec new(Types.env(), [any()]) :: Types.env()

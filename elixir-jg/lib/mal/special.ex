@@ -11,7 +11,7 @@ defmodule Mal.Special do
     "let*" => &Special.let/2,
     "do" => &Special.do_/2,
     "if" => &Special.if_/2,
-    "fn" => &Special.fn_/2
+    "fn*" => &Special.fn_/2
   }
 
   def is_special?(name) do
