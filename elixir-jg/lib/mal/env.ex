@@ -1,12 +1,13 @@
 defmodule Mal.Env do
   alias Mal.Evaluator
+  alias Mal.Forms
   import Mal.Types
 
   @coreenv %{
-    "+" => {:fn, &+/2},
-    "-" => {:fn, &-/2},
-    "*" => {:fn, &*/2},
-    "/" => {:fn, &//2}
+    "+" => %Forms.Interop{fn: &+/2},
+    "-" => %Forms.Interop{fn: &-/2},
+    "*" => %Forms.Interop{fn: &*/2},
+    "/" => %Forms.Interop{fn: &//2}
   }
 
   @spec new() :: Types.env()
@@ -40,7 +41,7 @@ defmodule Mal.Env do
   end
 
   defp init(env, [], []), do: env
-  defp init(env, [{:symbol, key} | binds], [e | exprs]) do
+  defp init(env, [%Forms.Symbol{name: key} | binds], [e | exprs]) do
     # { value, env } = Evaluator.eval(e, env)
     env = set(env, key, e)
     init(env, binds, exprs)
@@ -50,7 +51,7 @@ defmodule Mal.Env do
   defp init(_env, [_b | _binds], []), do: throw {:error, :too_many_binds}
 
   defp init(env, []), do: env
-  defp init(env, [{:symbol, key}, expr | bindings]) do
+  defp init(env, [%Forms.Symbol{name: key}, expr | bindings]) do
     { value, env } = Evaluator.eval(expr, env)
     env = set(env, key, value)
     init(env, bindings)

@@ -6,29 +6,45 @@ defmodule Mal.Evaluator do
   import Mal.Types
   require Logger
 
-  defprotocol Eval do
-    @fallback_to_any true
-    def eval(form, env)
+  require Mal.Special
+
+  def eval(%Forms.Symbol{name: name}, env) do
+    {Env.get(env, name), env}
   end
 
-  defimpl Eval, for: Any do
-    def eval(form, env), do: { form, env }
+  def eval(%Forms.List{list: list} = form, env) do
+    case list do
+      [] ->
+        {form, env}
+
+      [%Forms.Symbol{name: name} | args] ->
+        if Special.is_special?(name) do
+            Special.call_special(name, args, env)
+        else
+            f = Env.get(env, name)
+            {args, env} = eval_list(args, env)
+            applyfn(f, args, env)
+        end
+
+      list ->
+        {[f | args], env} = eval_list(list, env)
+
+        applyfn(f, args, env)
+
+        # list
+        # [%Forms.Symbol{name: "def!"} | args] -> Special.def!(args, env)
+        # [%Forms.Symbol{name: "def!"} | args] -> Special.def!(args, env)
+        # [%Forms.Symbol{name: "def!"} | args] -> Special.def!(args, env)
+        # [%Forms.Symbol{name: "def!"} | args] -> Special.def!(args, env)
+        # [%Forms.Symbol{name: "def!"} | args] -> Special.def!(args, env)
+    end
   end
 
-  def eval(f, env), do: Eval.eval(f, env)
-
-  @spec eval(Types.form(), Types.env()) :: {Types.form(), Types.env()}
-  def eval({:symbol, sym}, env) do
-    {Env.get(env, sym), env}
-  end
-
-  def eval({:list, []} = list, env), do: {list, env}
-
-  def eval({:list, [{:symbol, "def!"} | args]}, env), do: Special.def!(args, env)
-  def eval({:list, [{:symbol, "let*"} | args]}, env), do: Special.let(args, env)
-  def eval({:list, [{:symbol, "do"} | args]}, env), do: Special.do_(args, env)
-  def eval({:list, [{:symbol, "if"} | args]}, env), do: Special.if_(args, env)
-  def eval({:list, [{:symbol, "fn*"} | args]}, env), do: Special.fn_(args, env)
+  # def eval({:list, [{:symbol, "def!"} | args]}, env), do: Special.def!(args, env)
+  # def eval({:list, [{:symbol, "let*"} | args]}, env), do: Special.let(args, env)
+  # def eval({:list, [{:symbol, "do"} | args]}, env), do: Special.do_(args, env)
+  # def eval({:list, [{:symbol, "if"} | args]}, env), do: Special.if_(args, env)
+  # def eval({:list, [{:symbol, "fn*"} | args]}, env), do: Special.fn_(args, env)
 
   # def eval({:list, [{:symbol, "let*"} | args]}, env) do
   #   env = Env.new(env)
@@ -43,20 +59,20 @@ defmodule Mal.Evaluator do
   #   end
   # end
 
-  def eval({:list, list}, env) do
-    {[f | args], env} = eval_list(list, env)
+  # def eval({:list, list}, env) do
+  #   {[f | args], env} = eval_list(list, env)
 
-    { result, env } = applyfn(f, args, env)
+  #   {result, env} = applyfn(f, args, env)
 
-    {result, env}
-  end
+  #   {result, env}
+  # end
 
-  def eval({:vector, vec}, env) do
+  def eval(vec, env) when is_list(vec) do
     {vec, env} = eval_list(vec, env)
-    {{:vector, vec}, env}
+    {vec, env}
   end
 
-  def eval({:map, map}, env) do
+  def eval(map, env) when is_map(map) do
     {map, env} =
       Enum.reduce(map, {%{}, env}, fn {key, value}, {map, env} ->
         with(
@@ -67,7 +83,7 @@ defmodule Mal.Evaluator do
         end
       end)
 
-    {{:map, map}, env}
+    {map, env}
   end
 
   def eval(form, env) do
@@ -84,15 +100,12 @@ defmodule Mal.Evaluator do
     {Enum.reverse(newlist), env}
   end
 
-  defp applyfn({:fn, f}, args, env) do
-    args = Enum.map(args, fn {_, value} -> value end)
-    { make_form(apply(f, args)), env }
+  defp applyfn(%Forms.Interop{fn: f}, args, env) do
+    {apply(f, args), env}
   end
 
-  defp applyfn({:fnv, f}, args, env) do
-    # args = Enum.map(args, fn {_, value} -> value end)
-    { result, env } = apply(f, [args, env])
-    { result, env}
+  defp applyfn(%Forms.Fn{fn: f}, args, env) do
+     apply(f, [args, env])
   end
 
   defp applyfn(_, _, _), do: throw({:error, :not_a_function})
