@@ -67,11 +67,11 @@ defmodule Mal.Evaluator do
   end
 
   defp applyfn(%Forms.Interop{fn: f}, args, env) do
-    {apply(f, args), env}
+    {f.(args), env}
   end
 
   defp applyfn(%Forms.Fn{fn: f}, args, env) do
-     apply(f, [args, env])
+     f.(args, env)
   end
 
   defp applyfn(_, _, _), do: throw({:error, :not_a_function})

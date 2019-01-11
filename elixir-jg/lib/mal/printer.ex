@@ -22,8 +22,8 @@ defmodule Mal.Printer do
     "(with-meta #{print(form)} #{print(meta)})"
   end
 
+  def print(%Forms.Interop{fn: f}), do: "#{inspect f}"
   def print(%Forms.Fn{fn: f}), do: "#{inspect f}"
-  def print(%Forms.Fnv{fn: f}), do: "#{inspect f}"
 
   def print(list) when is_list(list), do: print_list("[", list, "]")
 

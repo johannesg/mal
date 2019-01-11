@@ -1,25 +1,27 @@
 defmodule Mal.CoreFunctions do
-  alias __MODULE__
+  # alias __MODULE__
   alias Mal.Forms
 
-  @allfunctions %{
-    "+" => &+/2,
-    "-" => &-/2,
-    "*" => &*/2,
-    # "+" => &+/2
-    "prn" => &CoreFunctions.prn/1,
-    "/" => &//2
-  }
+  require Logger
 
-  def get_all_functions() do
-    @allfunctions
-    |> Enum.map(fn {k, v} -> { k, %Forms.Interop{fn: v}} end)
-    |> Map.new()
+  def prn(forms) do
+    forms
+    |> Enum.map(fn f ->
+      IO.puts(Mal.Printer.print(f))
+    end)
+
+    nil
   end
 
-  def prn(form) do
-    Mal.Printer.print(form)
+  def list(list), do: %Forms.List{list: list}
 
-  end
+  def list?([%Forms.List{}]), do: true
+  def list?([_]), do: false
 
+  def count([%Forms.List{list: list}]), do: Enum.count(list)
+  def count([nil]), do: 0
+
+  def empty?([[]]), do: true
+  def empty?([%Forms.List{list: []}]), do: true
+  def empty?([_list]), do: false
 end
