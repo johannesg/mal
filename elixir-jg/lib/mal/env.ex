@@ -1,7 +1,8 @@
 defmodule Mal.Env do
-  alias Mal.Evaluator
   alias Mal.Forms
   import Mal.Types
+
+  require Logger
 
   @spec new() :: Types.env()
   def new() do
@@ -15,9 +16,9 @@ defmodule Mal.Env do
   end
 
   def get(%{} = env, key) do
-    case Map.get(env, key) do
-      nil -> throw({:error, "Symbol #{key} not found"})
-      v -> v
+    case Map.fetch(env, key) do
+      {:ok, v} -> v
+      :error -> throw({:error, "Symbol #{key} not found"})
     end
   end
 
@@ -26,6 +27,10 @@ defmodule Mal.Env do
   end
 
   def set(env, [], []), do: env
+
+  def set(env, [%Forms.Symbol{name: "&"}, more], exprs) do
+    set(env, more, %Forms.List{list: exprs})
+  end
 
   def set(env, [key | binds], [e | exprs]) do
     env = set(env, key, e)

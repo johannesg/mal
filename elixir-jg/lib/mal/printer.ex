@@ -6,7 +6,7 @@ defmodule Mal.Printer do
   def print(true), do: "true"
   def print(false), do: "false"
   def print("" <> str) do
-    "\"" <> print_str(str) <> "\""
+    "\"" <> escape_str(str) <> "\""
   end
 
   def print(%Forms.Symbol{name: name}), do: name
@@ -42,10 +42,15 @@ defmodule Mal.Printer do
     inspect(any)
   end
 
-  defp print_str(str) do
-    str
-    |> String.replace("\n", "\\n")
-    |> String.replace("\"", "\\\"")
+  defp escape_str(str), do: escape_str(str, "")
+
+  defp escape_str("", result), do: result
+  defp escape_str("\n" <> rest, result), do: escape_str(rest, result <> "\\n")
+  defp escape_str("\"" <> rest, result), do: escape_str(rest, result <> "\\\"")
+  defp escape_str("\\" <> rest, result), do: escape_str(rest, result <> "\\\\")
+  defp escape_str(rest, result) do
+    { ch, rest } = String.next_codepoint(rest)
+    escape_str(rest, result <> ch)
   end
 
   defp print_list(a, list, b) do

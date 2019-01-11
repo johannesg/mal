@@ -18,8 +18,10 @@ defmodule Mal.CoreFunctions do
   def list?([%Forms.List{}]), do: true
   def list?([_]), do: false
 
-  def count([%Forms.List{list: list}]), do: Enum.count(list)
+  # def count([]), do: 0
   def count([nil]), do: 0
+  def count([%Forms.List{list: list}]), do: Enum.count(list)
+  def count([list]), do: Enum.count(list)
 
   def empty?([[]]), do: true
   def empty?([%Forms.List{list: []}]), do: true

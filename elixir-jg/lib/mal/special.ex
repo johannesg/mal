@@ -3,7 +3,6 @@ defmodule Mal.Special do
   alias Mal.Env
   alias Mal.Evaluator
   alias Mal.Forms
-  alias Mal.Printer
 
   require Logger
 
@@ -90,13 +89,15 @@ defmodule Mal.Special do
   def fn_(_, _env), do: throw({:error, :invalid_args})
 
   def fn_(binds, body, env) do
-    # Logger.info("binds: #{Printer.print(binds)}")
+    # Logger.info("binds: #{inspect(binds)}")
     f = fn args, outer_env ->
-      # Logger.info("args: #{Printer.print(args)}")
-      # Logger.info("eval: #{Printer.print(body)}")
+      # Logger.info("args: #{inspect(args)}")
+      # Logger.info("eval: #{inspect(body)}")
       inner_env = outer_env
       |> Env.merge(env)
       |> Env.set(binds, args)
+
+      # Logger.info("env: #{inspect(inner_env)}")
       # Process.sleep(300)
       {result, _ } = do_(body, inner_env)
       {result, outer_env }

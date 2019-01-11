@@ -1,7 +1,16 @@
 defmodule Mix.Tasks.Step4IfFnDo do
   use Mix.Task
 
-  def run(_), do: loop(Mal.Env.new())
+  def run(_) do
+    env = Mal.Env.new()
+
+    {_, env} =
+      "(def! not (fn* (a) (if a false true)))"
+      |> read()
+      |> eval(env)
+
+    loop(env)
+  end
 
   defdelegate read(str), to: Mal.Reader
 
@@ -19,8 +28,9 @@ defmodule Mix.Tasks.Step4IfFnDo do
     else
       other -> throw({:error, :unknown_match, other})
     end
-  rescue e ->
-      {e.message(), env}
+  rescue
+    e ->
+      {"ERROR: #{inspect(e)}", env}
   catch
     {:error, err} ->
       {"ERROR: #{err}", env}
