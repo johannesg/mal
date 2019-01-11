@@ -24,7 +24,7 @@ defmodule Mal.Special do
     f.(args, env)
   end
 
-  def def!([%Forms.Symbol{name: key}, arg], env) do
+  def def!([%Forms.Symbol{} = key, arg], env) do
     {value, env} = Evaluator.eval(arg, env)
     {value, Env.set(env, key, value)}
   end
@@ -36,11 +36,20 @@ defmodule Mal.Special do
   def let(bindings, _), do: throw({:error, :invalid_args, inspect(bindings)})
 
   defp let(bindings, form, env) do
-    new_env = Env.new(env, bindings)
+    new_env = set_env(bindings, env)
 
     {result, _} = Evaluator.eval(form, new_env)
     {result, env}
   end
+
+  defp set_env([], env), do: env
+  defp set_env([b, e | bindings], env) do
+    { res, env } = Evaluator.eval(e, env)
+    env = Env.set(env, b, res)
+    set_env(bindings, env)
+  end
+
+  defp set_env(_b, _env), do: throw({:error, :invalid_bindings })
 
   def do_(expr, env) do
     Enum.reduce(expr, {nil, env}, fn e, {_, env} ->
@@ -81,14 +90,16 @@ defmodule Mal.Special do
   def fn_(_, _env), do: throw({:error, :invalid_args})
 
   def fn_(binds, body, env) do
+    # Logger.info("binds: #{Printer.print(binds)}")
     f = fn args, outer_env ->
-      inner_env = Env.new(outer_env, binds, args)
-      # Process.sleep(300)
       # Logger.info("args: #{Printer.print(args)}")
       # Logger.info("eval: #{Printer.print(body)}")
+      inner_env = outer_env
+      |> Env.merge(env)
+      |> Env.set(binds, args)
+      # Process.sleep(300)
       {result, _ } = do_(body, inner_env)
       {result, outer_env }
-      # Evaluator.eval(body, inner_env)
     end
 
     {%Forms.Fn{fn: f}, env}
