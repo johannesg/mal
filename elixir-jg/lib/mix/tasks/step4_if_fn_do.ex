@@ -19,9 +19,8 @@ defmodule Mix.Tasks.Step4IfFnDo do
     else
       other -> throw({:error, :unknown_match, other})
     end
-  rescue
-    ErlangError ->
-      {"Erlang error", env}
+  rescue e ->
+      {e.message(), env}
   catch
     {:error, err} ->
       {"ERROR: #{err}", env}

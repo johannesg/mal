@@ -3,6 +3,7 @@ defmodule Mal.Special do
   alias Mal.Env
   alias Mal.Evaluator
   alias Mal.Forms
+  alias Mal.Printer
 
   require Logger
 
@@ -51,8 +52,8 @@ defmodule Mal.Special do
     {result, env} = Evaluator.eval(ifexpr, env)
 
     case result do
-      nil -> nil
-      false -> nil
+      nil -> { nil, env }
+      false -> { nil, env }
       _ -> Evaluator.eval(thenexpr, env)
     end
   end
@@ -69,11 +70,11 @@ defmodule Mal.Special do
 
   def if_(_, _env), do: throw({:error, :invalid_args})
 
-  def fn_([%Forms.List{list: binds}, body], env) do
+  def fn_([%Forms.List{list: binds} | body], env) do
     fn_(binds, body, env)
   end
 
-  def fn_([binds, body], env) when is_list(binds) do
+  def fn_([binds | body], env) when is_list(binds) do
     fn_(binds, body, env)
   end
 
@@ -82,7 +83,12 @@ defmodule Mal.Special do
   def fn_(binds, body, env) do
     f = fn args, outer_env ->
       inner_env = Env.new(outer_env, binds, args)
-      Evaluator.eval(body, inner_env)
+      # Process.sleep(300)
+      # Logger.info("args: #{Printer.print(args)}")
+      # Logger.info("eval: #{Printer.print(body)}")
+      {result, _ } = do_(body, inner_env)
+      {result, outer_env }
+      # Evaluator.eval(body, inner_env)
     end
 
     {%Forms.Fn{fn: f}, env}

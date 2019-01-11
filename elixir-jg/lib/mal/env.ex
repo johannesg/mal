@@ -63,11 +63,18 @@ defmodule Mal.Env do
   defp init(_env, _b), do: throw({:error, :invalid_args})
 
   defp kernel_funs() do
-    [ &+/2, &-/2, &*/2, &//2 ]
-    |> Enum.map(fn f ->
-      {:name, name} = Function.info(f, :name)
-      { Atom.to_string(name), &apply(f, &1) }
-    end)
+    [
+      {"+", &+/2},
+      {"-", &-/2},
+      {"*", &*/2},
+      {"/", &//2},
+      {"=", &==/2},
+      {"<", &</2},
+      {">", &>/2},
+      {"<=", &<=/2},
+      {">=", &>=/2}
+    ]
+    |> Enum.map(fn {name, f} -> {name, &apply(f, &1)} end)
   end
 
   defp mod_to_function_list(mod) do
