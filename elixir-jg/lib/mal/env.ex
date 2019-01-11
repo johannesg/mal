@@ -47,7 +47,7 @@ defmodule Mal.Env do
       {"-", &-/2},
       {"*", &*/2},
       {"/", &//2},
-      {"=", &==/2},
+      # {"=", &==/2},
       {"<", &</2},
       {">", &>/2},
       {"<=", &<=/2},
@@ -58,6 +58,11 @@ defmodule Mal.Env do
 
   defp mod_to_function_list(mod) do
     mod.__info__(:functions)
-    |> Enum.map(fn {f, a} -> {Atom.to_string(f), Function.capture(mod, f, a)} end)
+    |> Enum.map(fn {f, a} ->
+      name = Atom.to_string(f)
+      name = String.replace(name, "_", "-")
+      name = String.replace(name, "equals?", "=")
+      {name, Function.capture(mod, f, a)}
+    end)
   end
 end
