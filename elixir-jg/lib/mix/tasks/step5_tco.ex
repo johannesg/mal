@@ -1,4 +1,4 @@
-defmodule Mix.Tasks.Step3Env do
+defmodule Mix.Tasks.Step5Tco do
   use Mix.Task
 
   def run(_) do
@@ -35,11 +35,18 @@ defmodule Mix.Tasks.Step3Env do
     else
       other -> throw({:error, :unknown_match, other})
     end
+  rescue
+    e ->
+      {"ERROR: #{inspect(e)}", env}
   catch
     {:error, err} ->
-      { "ERROR: #{err}", env }
+      {"ERROR: #{err}", env}
+
     {:error, err, extra} ->
-      { "ERROR: #{err}\nEXTRA: #{inspect(extra)}", env }
+      {"ERROR: #{err}\nEXTRA: #{inspect(extra)}", env}
+
+    _ ->
+      {"Some other error", env}
   end
 
   def loop(env) do

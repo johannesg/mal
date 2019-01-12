@@ -11,7 +11,9 @@ defmodule Mal.Special do
     "let*" => &Special.let/2,
     "do" => &Special.do_/2,
     "if" => &Special.if_/2,
-    "fn*" => &Special.fn_/2
+    "fn*" => &Special.fn_/2,
+    "." => &Special.invoke/2,
+    ".." => &Special.invoke2/2
   }
 
   def is_special?(name) do
@@ -105,4 +107,15 @@ defmodule Mal.Special do
 
     {%Forms.Fn{fn: f}, env}
   end
+
+  def invoke([module, fun | args], env) when is_atom(module) and is_atom(fun) do
+    { args, env } = Evaluator.eval(args, env)
+    { apply(module, fun, args), env }
+  end
+  def invoke(_, _env), do: throw({:error, :invalid_args})
+
+  def invoke2([module, fun | args], env) when is_atom(module) and is_atom(fun) do
+    apply(module, fun, args ++ [env])
+  end
+  def invoke2(_, _env), do: throw({:error, :invalid_args})
 end

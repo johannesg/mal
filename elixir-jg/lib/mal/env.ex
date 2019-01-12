@@ -6,13 +6,7 @@ defmodule Mal.Env do
 
   @spec new() :: Types.env()
   def new() do
-    env =
-      kernel_funs()
-      |> Enum.concat(mod_to_function_list(Mal.CoreFunctions))
-      |> Enum.map(fn {k, v} -> {k, %Forms.Interop{fn: v}} end)
-      |> Map.new()
-
-    env
+    Map.new()
   end
 
   def get(%{} = env, key) do
@@ -40,29 +34,4 @@ defmodule Mal.Env do
   def set(_env, key, expr), do: throw({:error, :invalid_args, "key = #{inspect(key)}, value = #{expr}"})
 
   def merge(a, b), do: Map.merge(a, b)
-
-  defp kernel_funs() do
-    [
-      {"+", &+/2},
-      {"-", &-/2},
-      {"*", &*/2},
-      {"/", &//2},
-      # {"=", &==/2},
-      {"<", &</2},
-      {">", &>/2},
-      {"<=", &<=/2},
-      {">=", &>=/2}
-    ]
-    |> Enum.map(fn {name, f} -> {name, &apply(f, &1)} end)
-  end
-
-  defp mod_to_function_list(mod) do
-    mod.__info__(:functions)
-    |> Enum.map(fn {f, a} ->
-      name = Atom.to_string(f)
-      name = String.replace(name, "_", "-")
-      name = String.replace(name, "equals?", "=")
-      {name, Function.capture(mod, f, a)}
-    end)
-  end
 end

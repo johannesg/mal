@@ -4,12 +4,19 @@ defmodule Mix.Tasks.Step4IfFnDo do
   def run(_) do
     env = Mal.Env.new()
 
+    # "(def! not (fn* (a) (if a false true)))"
     {_, env} =
-      "(def! not (fn* (a) (if a false true)))"
+      readfile("mal/core.mal")
       |> read()
       |> eval(env)
 
     loop(env)
+  end
+
+  def readfile(path) do
+    with {:ok, dev} <- File.open(path, [:read, :utf8]) do
+      IO.read(dev, :all)
+    end
   end
 
   defdelegate read(str), to: Mal.Reader
