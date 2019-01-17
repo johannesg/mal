@@ -1,0 +1,23 @@
+(do
+    (def! not (fn* (a) (if a false true)))
+
+    (def! + (fn* [a b] (. :Elixir.Kernel :+ a b)))
+    (def! - (fn* [a b] (. :Elixir.Kernel :- a b)))
+    (def! * (fn* [a b] (. :Elixir.Kernel :* a b)))
+    (def! / (fn* [a b] (. :Elixir.Kernel :/ a b)))
+    (def! < (fn* [a b] (. :Elixir.Kernel :< a b)))
+    (def! <= (fn* [a b] (. :Elixir.Kernel :<= a b)))
+    (def! > (fn* [a b] (. :Elixir.Kernel :> a b)))
+    (def! >= (fn* [a b] (. :Elixir.Kernel :>= a b)))
+
+    (def! list (fn* [& args] (. :Elixir.Mal.Core :list args)))
+    (def! list? (fn* [l] (. :Elixir.Mal.Core :list? l)))
+    (def! count (fn* [l] (. :Elixir.Mal.Core :count l)))
+    (def! empty? (fn* [l] (. :Elixir.Mal.Core :empty? l)))
+    (def! = (fn* [a b] (. :Elixir.Mal.Core :equals? a b)))
+
+    (def! pr-str (fn* [& args] (. :Elixir.Mal.Core :pr_str args)))
+    (def! str (fn* [& args] (. :Elixir.Mal.Core :str args)))
+    (def! prn (fn* [& args] (. :Elixir.Mal.Core :prn args)))
+    (def! println (fn* [& args] (. :Elixir.Mal.Core :println args)))
+)

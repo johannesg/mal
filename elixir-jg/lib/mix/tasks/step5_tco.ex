@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Step5Tco do
 
     # "(def! not (fn* (a) (if a false true)))"
     {_, env} =
-      readfile("mal/core.mal")
+      readfile("lisp/core.mal")
       |> read()
       |> eval(env)
 
