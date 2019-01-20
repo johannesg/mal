@@ -26,6 +26,10 @@ defmodule Mal.Evaluator do
             applyfn(f, args, env)
         end
 
+      [%Forms.Fn{} = f | args] ->
+        {args, env} = eval_list(args, env)
+        applyfn(f, args, env)
+
       list ->
         {[f | args], env} = eval_list(list, env)
 
@@ -66,9 +70,9 @@ defmodule Mal.Evaluator do
     {Enum.reverse(newlist), env}
   end
 
-  defp applyfn(%Forms.Interop{fn: f}, args, env) do
-    {f.(args), env}
-  end
+  # defp applyfn(%Forms.Interop{fn: f}, args, env) do
+  #   {f.(args), env}
+  # end
 
   defp applyfn(%Forms.Fn{fn: f}, args, env) do
      f.(args, env)

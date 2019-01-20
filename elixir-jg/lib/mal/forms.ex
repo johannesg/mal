@@ -38,10 +38,10 @@ defmodule Mal.Forms do
     defstruct [:form]
   end
 
-  defmodule Interop do
-    @enforce_keys [:fn]
-    defstruct [:fn]
-  end
+  # defmodule Interop do
+  #   @enforce_keys [:fn]
+  #   defstruct [:fn]
+  # end
 
   defmodule Fn do
     @enforce_keys [:fn]

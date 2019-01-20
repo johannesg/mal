@@ -1,6 +1,7 @@
 defmodule Mal.Core do
   # alias __MODULE__
   alias Mal.Forms
+  alias Mal.Evaluator
 
   require Logger
 
@@ -67,5 +68,17 @@ defmodule Mal.Core do
     |> IO.puts()
 
     nil
+  end
+
+  def slurp(path) do
+    with {:ok, dev} <- File.open(path, [:read, :utf8]) do
+      IO.read(dev, :all)
+    end
+  end
+
+  def eval(ast, env) do
+    # {ast, env}
+    { ast, env } = Evaluator.eval(ast, env)
+    Evaluator.eval(ast, env)
   end
 end

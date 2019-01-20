@@ -20,4 +20,8 @@
     (def! str (fn* [& args] (. :Elixir.Mal.Core :str args)))
     (def! prn (fn* [& args] (. :Elixir.Mal.Core :prn args)))
     (def! println (fn* [& args] (. :Elixir.Mal.Core :println args)))
+
+    (def! read-string (fn* [str] (. :Elixir.Mal.Reader :read str)))
+    (def! slurp (fn* [file] (. :Elixir.Mal.Core :slurp file)))
+    (def! eval (fn* [ast] (.. :Elixir.Mal.Core :eval ast)))
 )
